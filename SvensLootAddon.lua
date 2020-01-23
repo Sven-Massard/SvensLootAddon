@@ -19,7 +19,7 @@ function SLA:eventHandler(self, event, ...)
 		for i=1, # SLA_itemList do 
 			-- Thanks to EasyLoot for strmatch
 			if(strmatch(msg, "You receive .*"..SLA_itemList[i]..".*")) then
-				SendChatMessage("Hab "..SLA_itemList[i].." gelootet. yay...", "WHISPER", "COMMON", "Majima")
+				SLA:sendChatMessages(SLA_itemList[i])
 			end
 		end
 		
@@ -30,4 +30,10 @@ function SLA:eventHandler(self, event, ...)
 		end
 
     end
+end
+
+function SLA:sendChatMessages(itemName)
+	for i=1, # SLA_whisperList do
+		SendChatMessage("Hab "..itemName.." gelootet. yay...", "WHISPER", "COMMON", SLA_whisperList[i])
+	end
 end
