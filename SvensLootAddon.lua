@@ -15,12 +15,15 @@ function SLA:eventHandler(self, event, ...)
 	
     if event == "CHAT_MSG_LOOT" then
 
-		msg, player = ...
+		local msg, player = ...
+
+		local LootString = LOOT_ITEM_SELF:gsub("%%s.", "")
 
 		for i=1, # SLA_itemList do 
 			-- Thanks to EasyLoot for strmatch
 			if(strmatch(msg, "You receive .*"..SLA_itemList[i]..".*")) then
-				SLA:Chat_Message_Loot_Event(SLA_itemList[i])
+				local ItemLink = msg:gsub(LootString, ""):gsub("%.", "")
+				SLA:Chat_Message_Loot_Event(ItemLink)
 			end
 		end
 		

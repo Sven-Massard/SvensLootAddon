@@ -5,6 +5,6 @@
 ## Notes: Stuff with loot and stuff
 ## DefaultState: Enabled
 ## LoadOnDemand: 0
-## SavedVariablesPerCharacter:
+## SavedVariablesPerCharacter: SLA_itemList,SLA_whisperList,SLA_output_message,SLA_outputChannelList,SLA_color
 SvensLootAddon.xml
 SvensLootAddonConfig.lua

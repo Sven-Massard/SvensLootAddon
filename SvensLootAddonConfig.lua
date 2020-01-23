@@ -67,7 +67,6 @@ function SLA:loadAddon()
     SvensLootAddonChannelOptions.panel.parent = "Svens Loot Addon"
     SvensLootAddonChannelOptions.panel.okay = function()
         SLA:saveWhisperList()
-		SLA:saveItemList()
     end
     SLA:populateChannelSubmenu(channelButtonList, channelList)
 	
@@ -78,6 +77,7 @@ function SLA:loadAddon()
     SvensLootAddonGeneralOptions.panel.parent = "Svens Loot Addon"
     SvensLootAddonGeneralOptions.panel.okay = function()
         SLA:saveOutputMessage()
+		SLA:saveitemList()
 
     end
     SLA:populateGeneralSubmenu(eventButtonList, rgb)
@@ -349,7 +349,7 @@ function SLA:setPanelTexts()
 	FontColorDescription:SetText(SLA_color.."Change color of Font")
 	SLA_Output_Channel_Description:SetText(SLA_color.."Output Channel")
 	OtherOptionsDescription:SetText(SLA_color.."Other options:")
-	Sla_item_description:SetText(SLA_color.."Item Liste:")
+	Sla_item_description:SetText(SLA_color.."Item List:")
 end
 
 
