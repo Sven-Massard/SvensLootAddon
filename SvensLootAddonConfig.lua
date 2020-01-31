@@ -30,8 +30,8 @@ function SLA:loadAddon()
 			{color = "Blue",  value = SLA_color:sub(9, 10)}
 		}
 
-	if(SLA_itemList == nil) then
-		SLA_itemList = {
+	if(SLA_itemsToTrackList == nil) then
+		SLA_itemsToTrackList = {
 		}
 	end
 
@@ -140,7 +140,7 @@ end
 function SLA:createSLA_Item_List_Edit_Box(height, width, y)
 	SLA_Item_List_Edit_Box = SLA:createEditBox("SLA_Item_List_Edit_Box", SvensLootAddonGeneralOptions.panel, height, width)
     SLA_Item_List_Edit_Box:SetPoint("TOPLEFT", 40, y)
-	for _, v in pairs(SLA_itemList) do
+	for _, v in pairs(SLA_itemsToTrackList) do
 		SLA_Item_List_Edit_Box:Insert("\""..v.."\" ")
 	end
 	SLA_Item_List_Edit_Box:SetCursorPosition(0)
@@ -148,7 +148,7 @@ function SLA:createSLA_Item_List_Edit_Box(height, width, y)
 	SLA_Item_List_Edit_Box:SetScript( "OnEscapePressed", function(...)
 		SLA_Item_List_Edit_Box:ClearFocus()
 		SLA_Item_List_Edit_Box:SetText("")
-		for _, v in pairs(SLA_itemList) do
+		for _, v in pairs(SLA_itemsToTrackList) do
 			SLA_Item_List_Edit_Box:Insert("\""..v.."\" ")
 		end
 	end)
@@ -329,9 +329,9 @@ function SLA:createEditBox(name, parentFrame, height, width)
 end
 
 function SLA:saveitemList()
-	SLA_itemList = {}
+	SLA_itemsToTrackList = {}
     for arg in string.gmatch(SLA_Item_List_Edit_Box:GetText(), '"(.-)"') do
-        table.insert(SLA_itemList, arg)
+        table.insert(SLA_itemsToTrackList, arg)
     end
 end
 

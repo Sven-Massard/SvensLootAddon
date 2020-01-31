@@ -54,11 +54,12 @@ function SLA:eventHandler(self, event, ...)
 
 		local LootString = LOOT_ITEM_SELF:gsub("%%s.", "")
 
-		for i=1, # SLA_itemList do 
+		for i=1, # SLA_itemsToTrackList do 
 			-- Thanks to EasyLoot for strmatch
-			if(strmatch(msg, LootString..".*"..SLA_itemList[i]..".*")) then
+			if(true) then -- strmatch(msg, LootString..".*"..SLA_itemsToTrackList[i]..".*")
 				local ItemLink = msg:gsub(LootString, ""):gsub("%.", "")
-				SLA:Chat_Message_Loot_Event(ItemLink)
+				local timesItemFound = SLA:AddToLootList(ItemLink)
+				SLA:Chat_Message_Loot_Event(ItemLink, timesItemFound)
 			end
 		end
 		
@@ -71,9 +72,9 @@ function SLA:eventHandler(self, event, ...)
     end
 end
 
-function SLA:Chat_Message_Loot_Event(itemName)
+function SLA:Chat_Message_Loot_Event(itemName, timesItemFound)
 			local output
-				output = SLA_output_message:gsub("(IN)", itemName)
+				output = SLA_output_message:gsub("(IN)", itemName):gsub("(I#)", timesItemFound)
             for _, v in pairs(SLA_outputChannelList) do
                 if v == "Print" then
                     print(SLA_color..output)
