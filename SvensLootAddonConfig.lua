@@ -18,6 +18,9 @@ function SLA:loadAddon()
             "Whisper",
         }
 
+	if(SLA_timeStamp == nil) then
+		SLA_timeStamp = date()
+	end
 
     if(SLA_color == nil) then
 		SLA_color = "|cff".."94".."CF".."00"
@@ -183,7 +186,7 @@ function SLA:createSLA_Output_Message_Edit_Box(height, width, y)
     end)
     SLA_Output_Message_Edit_Box:SetScript( "OnEnter", function(...)            
         GameTooltip:SetOwner(SLA_Output_Message_Edit_Box, "ANCHOR_BOTTOM");
-        GameTooltip:SetText( "Insert your message here.\nIN will be replaced with item name.\n" )
+        GameTooltip:SetText( "Insert your message here.\nIN will be replaced with item name.\nI# will be replaced with amount of times item was found\nTS will be replaced with time stamp since recording / loot list reset" )
         GameTooltip:ClearAllPoints()
         GameTooltip:Show()
     end)

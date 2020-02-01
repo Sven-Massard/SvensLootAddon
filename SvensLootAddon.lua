@@ -63,7 +63,7 @@ function SLA:eventHandler(self, event, ...)
 
 		for i=1, # SLA_itemsToTrackList do 
 			-- Thanks to EasyLoot for strmatch
-			if(true) then -- strmatch(msg, LootString..".*"..SLA_itemsToTrackList[i]..".*")
+			if(strmatch(msg, LootString..".*"..SLA_itemsToTrackList[i]..".*")) then
 				local ItemLink = msg:gsub(LootString, ""):gsub("%.", "")
 				local timesItemFound = SLA:AddToLootList(ItemLink)
 				SLA:send_messages_from_outputChannelList(SLA_output_message, ItemLink, timesItemFound)
@@ -80,10 +80,10 @@ function SLA:eventHandler(self, event, ...)
 end
 
 function SLA:send_messages_from_outputChannelList(message, itemName, timesItemFound)
-			local output = message:gsub("(IN)", itemName):gsub("(I#)", timesItemFound)
+			local output = message:gsub("(IN)", itemName):gsub("(I#)", timesItemFound):gsub("(TS)", SLA_timeStamp) -- Keep same as in print except for color code
             for _, v in pairs(SLA_outputChannelList) do
                 if v == "Print" then
-                    print(SLA_color..message:gsub("(IN)", itemName..SLA_color):gsub("(I#)", timesItemFound))
+                    print(SLA_color..message:gsub("(IN)", itemName..SLA_color):gsub("(I#)", timesItemFound):gsub("(TS)", SLA_timeStamp))
                 elseif (v == "Whisper") then
                     for _, w in pairs(SLA_whisperList) do
 						SendChatMessage(output, "WHISPER", "COMMON", w)
@@ -116,9 +116,9 @@ function SLA:slash_cmd(params)
     local firstVariable=2
     if(cmd == "help" or cmd == "") then
         print(SLA_color.."Possible parameters:")
-        print(SLA_color.."list: lists loot list")
-		print(SLA_color.."report: report loot list")
-        print(SLA_color.."clear: delete loot list")
+        print(SLA_color.."list: Lists loot list")
+		print(SLA_color.."report: Report loot list")
+        print(SLA_color.."clear: Delete loot list. Also resets time stamp.")
 		print(SLA_color.."config: Opens config page")
     elseif(cmd == "list") then
         SLA:listLootList();
