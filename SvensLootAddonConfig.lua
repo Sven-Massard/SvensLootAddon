@@ -57,7 +57,7 @@ function SLA:loadAddon()
     SvensLootAddonConfig = {};
     SvensLootAddonConfig.panel = CreateFrame( "Frame", "SvensLootAddonConfig", UIParent );    
     SvensLootAddonConfig.panel.name = "Svens Loot Addon";
-    SvensLootAddonConfig.panel.title = SvensLootAddonConfig.panel:CreateFontString("SLAGeneralOptionsDescription", "OVERLAY");
+    SvensLootAddonConfig.panel.title = SvensLootAddonConfig.panel:CreateFontString("SLA_GeneralOptionsDescription", "OVERLAY");
     SvensLootAddonConfig.panel.title:SetFont(GameFontNormal:GetFont(), 14, "NONE");
     SvensLootAddonConfig.panel.title:SetPoint("TOPLEFT", 5, -5);
     SvensLootAddonConfig.panel.title:SetJustifyH("LEFT")
@@ -106,7 +106,7 @@ function SLA:populateGeneralSubmenu(eventButtonList, rgb)
 	local boxesPlaced = 0 -- increase after each edit box or check box placed
 	
 	--Item Box
-	SvensLootAddonGeneralOptions.panel.title = SvensLootAddonGeneralOptions.panel:CreateFontString("Sla_item_description", "OVERLAY");
+	SvensLootAddonGeneralOptions.panel.title = SvensLootAddonGeneralOptions.panel:CreateFontString("SLA_Item_Description", "OVERLAY");
     SvensLootAddonGeneralOptions.panel.title:SetFont(GameFontNormal:GetFont(), 14, "NONE");
     SvensLootAddonGeneralOptions.panel.title:SetPoint("TOPLEFT", 5, -24*amountLinesWritten - baseYOffSet);
 	amountLinesWritten = amountLinesWritten + 1
@@ -127,7 +127,7 @@ function SLA:populateGeneralSubmenu(eventButtonList, rgb)
 
 	-- Color changer 
     yOffSet = 3
-	SvensLootAddonGeneralOptions.panel.title = SvensLootAddonGeneralOptions.panel:CreateFontString("FontColorDescription", "OVERLAY");
+	SvensLootAddonGeneralOptions.panel.title = SvensLootAddonGeneralOptions.panel:CreateFontString("SLA_FontColorDescription", "OVERLAY");
     SvensLootAddonGeneralOptions.panel.title:SetFont(GameFontNormal:GetFont(), 14, "NONE");
     SvensLootAddonGeneralOptions.panel.title:SetPoint("TOPLEFT", 5, -(baseYOffSet + categorieNumber*categoriePadding + amountLinesWritten*lineHeight + boxesPlaced*boxSpacing));
 	amountLinesWritten = amountLinesWritten + 1
@@ -226,7 +226,7 @@ function SLA:createCheckButtonChannel(i, x, y, channelButtonList, channelList)
         if channelButtonList[i]:GetChecked() then
             table.insert(SLA_outputChannelList, channelList[i])         
         else
-            indexOfFoundValues = {}
+            local indexOfFoundValues = {}
             for j = 1, # SLA_outputChannelList do
                 if(SLA_outputChannelList[j] == channelList[i]) then
                     table.insert(indexOfFoundValues, j)
@@ -273,7 +273,7 @@ function SLA:createCheckButtonChannel(i, x, y, channelButtonList, channelList)
 end
 
 function SLA:createResetChannelListButton(parentFrame, channelList, channelButtonList)
-    resetChannelListButton = CreateFrame("Button", "ResetButtonChannels", parentFrame, "UIPanelButtonTemplate");
+    local resetChannelListButton = CreateFrame("Button", "ResetButtonChannels", parentFrame, "UIPanelButtonTemplate");
     resetChannelListButton:ClearAllPoints()
     resetChannelListButton:SetPoint("TOPLEFT", 32, ((# channelList) + 1)*-24 -8)
     resetChannelListButtonText = "Clear Channel List (May fix bugs after updating)"
@@ -341,18 +341,17 @@ end
 function SLA:convertRGBDecimalToRGBHex(decimal)
 	local result
 	local numbers = "0123456789ABCDEF"
-	result = numbers:sub(1+(decimal/16), 1+(decimal/16))..numbers:sub(1+(decimal%16), 1+(decimal%16))
+	local result = numbers:sub(1+(decimal/16), 1+(decimal/16))..numbers:sub(1+(decimal%16), 1+(decimal%16))
 	return result
 end
 
 function SLA:setPanelTexts()
-	SLAGeneralOptionsDescription:SetText(SLA_color.."Choose sub menu to change options")
+	SLA_GeneralOptionsDescription:SetText(SLA_color.."Choose sub menu to change options")
 	SLA_OutputMessageDescription:SetText(SLA_color.."Output Message")
 	SvensLootAddonGeneralOptions.panel.title:SetText(SLA_color.."Change color of Font")
-	FontColorDescription:SetText(SLA_color.."Change color of Font")
+	SLA_FontColorDescription:SetText(SLA_color.."Change color of Font")
 	SLA_Output_Channel_Description:SetText(SLA_color.."Output Channel")
-	OtherOptionsDescription:SetText(SLA_color.."Other options:")
-	Sla_item_description:SetText(SLA_color.."Item List:")
+	SLA_Item_Description:SetText(SLA_color.."Item List:")
 end
 
 
