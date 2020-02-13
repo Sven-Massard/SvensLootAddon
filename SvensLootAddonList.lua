@@ -29,6 +29,7 @@ end
 
 function SLA:clearLootList()
 	SLA_foundItemsList = {}
+	SLA_timeStamp = date()
 	print(SLA_color.."Loot list cleared!")
 end
 
