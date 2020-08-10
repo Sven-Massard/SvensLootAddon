@@ -362,6 +362,9 @@ function SLA:setPanelTexts()
 end
 
 function SLA:fixItemList()
+    if not SLA_foundItemsList then
+        do return end
+    end
     local foundSomething = false
     local i = 1
     while i <= #SLA_foundItemsList do
