@@ -362,6 +362,7 @@ end
 
 function SLA:fixItemList()
     if not SLA_foundItemsList then
+        SLA_isItemListFixed = true
         do return end
     end
     local foundSomething = false
