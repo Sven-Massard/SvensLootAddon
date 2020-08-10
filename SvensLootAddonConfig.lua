@@ -96,7 +96,6 @@ function SLA:loadAddon()
         if wasItemMerged then
             print(SLA_color .. "Svens Loot Addon: Found duplicate items and merged them. This happened when an item was found with your char at different char levels.")
         end
-        SLA_isItemListFixed = true
     end
 
     print(SLA_color .. "Svens Loot Addon loaded! Type /sla help for options!")
@@ -378,8 +377,12 @@ function SLA:fixItemList()
             local comparedItemName = GetItemInfo(comparedItem)
             local comparedItemAmount = SLA_foundItemsList[j][2]
 
+            -- sometimes, not everything is loaded yet. Then quit
+            if not currentItemName or not comparedItemName then
+                do return end
+            end
+
             if (currentItemName == comparedItemName) then
-                -- Leave this line in! The script fails here if data is not correctly loaded
                 print(SLA_color.."Found Match: "..currentItemName.."  "..comparedItemName)
                 foundSomething = true
                 currentItemAmount = currentItemAmount + comparedItemAmount
@@ -393,5 +396,6 @@ function SLA:fixItemList()
             i = i + 1
         end
     end
+    SLA_isItemListFixed = true
     return foundSomething
 end
