@@ -37,7 +37,7 @@ function SLA:clearLootList()
 end
 
 function SLA:listLootList()
-    if next(SLA_foundItemsList) == nil then
+    if (SLA_foundItemsList == nil) or (next(SLA_foundItemsList) == nil) then
         print(SLA_color .. "Loot list empty.")
     else
         print(SLA_color .. "Loot report for items since " .. SLA_timeStamp .. ": ")
@@ -48,9 +48,13 @@ function SLA:listLootList()
 end
 
 function SLA:reportLootList()
-    SLA:send_messages_from_outputChannelList("Loot report for items since " .. SLA_timeStamp .. ": ", "", "")
-    local message = "Found IN in total I# times."
-    for i = 1, #SLA_foundItemsList do
-        SLA:send_messages_from_outputChannelList(message, SLA_foundItemsList[i][1], SLA_foundItemsList[i][2])
+    if (SLA_foundItemsList == nil) or (next(SLA_foundItemsList) == nil) then
+        print(SLA_color .. "Loot list empty.")
+    else
+        SLA:send_messages_from_outputChannelList("Loot report for items since " .. SLA_timeStamp .. ": ", "", "")
+        local message = "Found IN in total I# times."
+        for i = 1, #SLA_foundItemsList do
+            SLA:send_messages_from_outputChannelList(message, SLA_foundItemsList[i][1], SLA_foundItemsList[i][2])
+        end
     end
 end
