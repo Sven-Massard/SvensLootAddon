@@ -33,6 +33,11 @@ function SLA:loadAddon()
         }
     end
 
+    if (SLA_foundItemsList == nil) then
+        SLA_foundItemsList = {
+        }
+    end
+
     if (SLA_whisperList == nil) then
         SLA_whisperList = {}
     end
