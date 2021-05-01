@@ -80,7 +80,7 @@ function SLA:loadAddon()
     SvensLootAddonGeneralOptions.panel.parent = "Svens Loot Addon"
     SvensLootAddonGeneralOptions.panel.okay = function()
         SLA:saveOutputMessage()
-        SLA:saveitemList()
+        SLA:saveItemList()
 
     end
     SLA:populateGeneralSubmenu(eventButtonList, rgb)
@@ -111,10 +111,10 @@ function SLA:populateGeneralSubmenu(_, rgb)
     local boxHeight = 32
     local boxSpacing = 24 -- Even though a box is 32 high, it somehow takes only 24 of space
     local editBoxWidth = 400
-    local categoriePadding = 16
+    local categoryPadding = 16
     local baseYOffSet = 5
 
-    local categorieNumber = 0 -- increase after each categorie
+    local categoryNumber = 0 -- increase after each category
     local amountLinesWritten = 0 -- increase after each Font String
     local boxesPlaced = 0 -- increase after each edit box or check box placed
 
@@ -124,31 +124,31 @@ function SLA:populateGeneralSubmenu(_, rgb)
     SvensLootAddonGeneralOptions.panel.title:SetPoint("TOPLEFT", 5, -24 * amountLinesWritten - baseYOffSet);
     amountLinesWritten = amountLinesWritten + 1
 
-    SLA:createSLA_Item_List_Edit_Box(boxHeight, editBoxWidth, -(baseYOffSet + categorieNumber * categoriePadding + amountLinesWritten * lineHeight + boxesPlaced * boxSpacing))
+    SLA:createSLA_Item_List_Edit_Box(boxHeight, editBoxWidth, -(baseYOffSet + categoryNumber * categoryPadding + amountLinesWritten * lineHeight + boxesPlaced * boxSpacing))
     boxesPlaced = boxesPlaced + 1
-    categorieNumber = categorieNumber + 1
+    categoryNumber = categoryNumber + 1
 
     -- Output Message
     SvensLootAddonGeneralOptions.panel.title = SvensLootAddonGeneralOptions.panel:CreateFontString("SLA_OutputMessageDescription", "OVERLAY");
     SvensLootAddonGeneralOptions.panel.title:SetFont(GameFontNormal:GetFont(), 14, "NONE");
-    SvensLootAddonGeneralOptions.panel.title:SetPoint("TOPLEFT", 5, -(baseYOffSet + categorieNumber * categoriePadding + amountLinesWritten * lineHeight + boxesPlaced * boxSpacing));
+    SvensLootAddonGeneralOptions.panel.title:SetPoint("TOPLEFT", 5, -(baseYOffSet + categoryNumber * categoryPadding + amountLinesWritten * lineHeight + boxesPlaced * boxSpacing));
     amountLinesWritten = amountLinesWritten + 1
 
-    SLA:createSLA_Output_Message_Edit_Box(boxHeight, editBoxWidth, -(baseYOffSet + categorieNumber * categoriePadding + amountLinesWritten * lineHeight + boxesPlaced * boxSpacing))
+    SLA:createSLA_Output_Message_Edit_Box(boxHeight, editBoxWidth, -(baseYOffSet + categoryNumber * categoryPadding + amountLinesWritten * lineHeight + boxesPlaced * boxSpacing))
     boxesPlaced = boxesPlaced + 1
-    categorieNumber = categorieNumber + 1
+    categoryNumber = categoryNumber + 1
 
     -- Color changer
     yOffSet = 3
     SvensLootAddonGeneralOptions.panel.title = SvensLootAddonGeneralOptions.panel:CreateFontString("SLA_FontColorDescription", "OVERLAY");
     SvensLootAddonGeneralOptions.panel.title:SetFont(GameFontNormal:GetFont(), 14, "NONE");
-    SvensLootAddonGeneralOptions.panel.title:SetPoint("TOPLEFT", 5, -(baseYOffSet + categorieNumber * categoriePadding + amountLinesWritten * lineHeight + boxesPlaced * boxSpacing));
+    SvensLootAddonGeneralOptions.panel.title:SetPoint("TOPLEFT", 5, -(baseYOffSet + categoryNumber * categoryPadding + amountLinesWritten * lineHeight + boxesPlaced * boxSpacing));
     amountLinesWritten = amountLinesWritten + 1
     amountLinesWritten = amountLinesWritten + 1 --Another Time, because the Sliders have on line above
     for i = 1, 3 do
-        SLA:createColorSlider(i, SvensLootAddonGeneralOptions.panel, rgb, -(baseYOffSet + categorieNumber * categoriePadding + amountLinesWritten * lineHeight + boxesPlaced * boxSpacing))
+        SLA:createColorSlider(i, SvensLootAddonGeneralOptions.panel, rgb, -(baseYOffSet + categoryNumber * categoryPadding + amountLinesWritten * lineHeight + boxesPlaced * boxSpacing))
     end
-    categorieNumber = categorieNumber + 1
+    categoryNumber = categoryNumber + 1
 
 
 end
@@ -170,7 +170,7 @@ function SLA:createSLA_Item_List_Edit_Box(height, width, y)
     end)
     SLA_Item_List_Edit_Box:SetScript("OnEnterPressed", function(...)
         SLA_Item_List_Edit_Box:ClearFocus()
-        SLA:saveitemList()
+        SLA:saveItemList()
     end)
     SLA_Item_List_Edit_Box:SetScript("OnEnter", function(...)
         GameTooltip:SetOwner(SLA_Item_List_Edit_Box, "ANCHOR_BOTTOM");
@@ -343,7 +343,7 @@ function SLA:createEditBox(name, parentFrame, height, width)
     return eb
 end
 
-function SLA:saveitemList()
+function SLA:saveItemList()
     SLA_itemsToTrackList = {}
     for arg in string.gmatch(SLA_Item_List_Edit_Box:GetText(), '"(.-)"') do
         table.insert(SLA_itemsToTrackList, arg)
