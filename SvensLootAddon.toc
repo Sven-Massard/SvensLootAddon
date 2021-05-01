@@ -1,7 +1,7 @@
 ## Interface: 11307
 ## Title: Svens Loot AddOn
 ## Author: Verband
-## Version: 0.1
+## Version: 1.1
 ## Notes: Stuff with loot and stuff
 ## DefaultState: Enabled
 ## LoadOnDemand: 0
