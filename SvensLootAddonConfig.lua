@@ -562,6 +562,7 @@ function localAddon:setPanelTexts()
     generalOptions.args.outputMessageOption.name = self.db.char.color .. "Output Message"
     generalOptions.args.otherOptionsDescription.name = self.db.char.color .. "Other Options"
     generalOptions.args.fontColorDescription.name = self.db.char.color .. "Change Color of Font"
+    generalOptions.args.itemListInput.name = self.db.char.color .. "Items to track"
     channelOptions.name = self.db.char.color .. "Output Channel"
 end
 
