@@ -1,407 +1,677 @@
-function SLA:loadAddon()
-    local channelButtonList = {}
-    local channelList = {
-        "Say",
-        "Yell",
-        "Print",
-        "Guild",
-        "Raid",
-        "Emote",
-        "Party",
-        "Officer",
-        "Raid_Warning",
-        "Battleground",
-        "Whisper",
+local localAddon = SvensLootAddon
+
+local AceConfig = LibStub("AceConfig-3.0")
+local AceConfigDialog = LibStub("AceConfigDialog-3.0")
+local AceDatabase = LibStub("AceDB-3.0")
+
+local defaults = {
+    char = {
+        outputMessage = "Found IN!",
+        outputChannelList = {
+            Say = false,
+            Yell = false,
+            Print = true,
+            Guild = false,
+            Raid = false,
+            Emote = false,
+            Party = false,
+            Officer = false,
+            Raid_Warning = false,
+            Battleground = false,
+            Whisper = false,
+            battleNetWhisper = false,
+            Train_emote = false,
+        },
+        whisperList = {},
+        battleNetWhisperBattleNetTagToId = {},
+        chatFrameName = COMMUNITIES_DEFAULT_CHANNEL_NAME,
+        chatFrameIndex = 1,
+        color = "|cff" .. "94" .. "CF" .. "00",
+        minimap = { hide = false, },
+
+        timeStamp = date(),
+        itemsToTrack = {},
+        foundItems = {},
+        isMigratedToAce = false
     }
+}
 
-    if (SLA_timeStamp == nil) then
-        SLA_timeStamp = date()
-    end
-
-    if (SLA_color == nil) then
-        SLA_color = "|cff" .. "94" .. "CF" .. "00"
-    end
-
-    local rgb = {
-        { color = "Red", value = SLA_color:sub(5, 6) },
-        { color = "Green", value = SLA_color:sub(7, 8) },
-        { color = "Blue", value = SLA_color:sub(9, 10) }
+local mainOptions = { -- https://www.wowace.com/projects/ace3/pages/ace-config-3-0-options-tables
+    name = "will be replaced",
+    type = "group",
+    args = {
+        mainDescription = {
+            type = "description",
+            fontSize = "medium",
+            name = "will be replaced"
+        },
     }
-
-    if (SLA_itemsToTrackList == nil) then
-        SLA_itemsToTrackList = {
-        }
-    end
-
-    if (SLA_foundItemsList == nil) then
-        SLA_foundItemsList = {
-        }
-    end
-
-    if (SLA_whisperList == nil) then
-        SLA_whisperList = {}
-    end
-
-    if (SLA_output_message == nil) then
-        SLA_output_message = "Found IN!"
-    end
-
-    if (SLA_outputChannelList == nil) then
-        SLA_outputChannelList = {
-            "Print",
-        }
-    end
-
-    --Good Guide https://github.com/tomrus88/BlizzardInterfaceCode/blob/master/Interface/FrameXML/InterfaceOptionsFrame.lua
-    --Options Main Menu
-    SvensLootAddonConfig = {};
-    SvensLootAddonConfig.panel = CreateFrame("Frame", "SvensLootAddonConfig", UIParent);
-    SvensLootAddonConfig.panel.name = "Svens Loot Addon";
-    SvensLootAddonConfig.panel.title = SvensLootAddonConfig.panel:CreateFontString("SLA_GeneralOptionsDescription", "OVERLAY");
-    SvensLootAddonConfig.panel.title:SetFont(GameFontNormal:GetFont(), 14, "NONE");
-    SvensLootAddonConfig.panel.title:SetPoint("TOPLEFT", 5, -5);
-    SvensLootAddonConfig.panel.title:SetJustifyH("LEFT")
-
-
-    --Channel Options SubMenu
-    SvensLootAddonChannelOptions = {}
-    SvensLootAddonChannelOptions.panel = CreateFrame("Frame", "SvensLootAddonChannelOptions");
-    SvensLootAddonChannelOptions.panel.name = "Channel options";
-    SvensLootAddonChannelOptions.panel.parent = "Svens Loot Addon"
-    SvensLootAddonChannelOptions.panel.okay = function()
-        SLA:saveWhisperList()
-    end
-    SLA:populateChannelSubmenu(channelButtonList, channelList)
-
-    --General Options SubMenu NEEDS TO BE LAST BECAUSE SLIDERS CHANGE FONTSTRINGS OF ALL MENUS
-    SvensLootAddonGeneralOptions = {}
-    SvensLootAddonGeneralOptions.panel = CreateFrame("Frame", "SvensLootAddonGeneralOptions");
-    SvensLootAddonGeneralOptions.panel.name = "General options";
-    SvensLootAddonGeneralOptions.panel.parent = "Svens Loot Addon"
-    SvensLootAddonGeneralOptions.panel.okay = function()
-        SLA:saveOutputMessage()
-        SLA:saveItemList()
-
-    end
-    SLA:populateGeneralSubmenu(eventButtonList, rgb)
-
-    --Set order of Menus here
-    InterfaceOptions_AddCategory(SvensLootAddonConfig.panel);
-    InterfaceOptions_AddCategory(SvensLootAddonGeneralOptions.panel);
-    InterfaceOptions_AddCategory(SvensLootAddonChannelOptions.panel);
-
-    -- Run fixes
-    if (SLA_isItemListFixed == nil) then
-        SLA_isItemListFixed = false
-    end
-
-    if not SLA_isItemListFixed then
-        print(SLA_color .. "Svens Loot Addon: Running script to fix item list after patch")
-        local wasItemMerged = SLA:fixItemList()
-        if wasItemMerged then
-            print(SLA_color .. "Svens Loot Addon: Found duplicate items and merged them. This happened when an item was found with your char at different char levels.")
-        end
-    end
-
-    print(SLA_color .. "Svens Loot Addon loaded! Type /sla help for options!")
-end
-
-function SLA:populateGeneralSubmenu(_, rgb)
-    local lineHeight = 16
-    local boxHeight = 32
-    local boxSpacing = 24 -- Even though a box is 32 high, it somehow takes only 24 of space
-    local editBoxWidth = 400
-    local categoryPadding = 16
-    local baseYOffSet = 5
-
-    local categoryNumber = 0 -- increase after each category
-    local amountLinesWritten = 0 -- increase after each Font String
-    local boxesPlaced = 0 -- increase after each edit box or check box placed
-
-    --Item Box
-    SvensLootAddonGeneralOptions.panel.title = SvensLootAddonGeneralOptions.panel:CreateFontString("SLA_Item_Description", "OVERLAY");
-    SvensLootAddonGeneralOptions.panel.title:SetFont(GameFontNormal:GetFont(), 14, "NONE");
-    SvensLootAddonGeneralOptions.panel.title:SetPoint("TOPLEFT", 5, -24 * amountLinesWritten - baseYOffSet);
-    amountLinesWritten = amountLinesWritten + 1
-
-    SLA:createSLA_Item_List_Edit_Box(boxHeight, editBoxWidth, -(baseYOffSet + categoryNumber * categoryPadding + amountLinesWritten * lineHeight + boxesPlaced * boxSpacing))
-    boxesPlaced = boxesPlaced + 1
-    categoryNumber = categoryNumber + 1
-
-    -- Output Message
-    SvensLootAddonGeneralOptions.panel.title = SvensLootAddonGeneralOptions.panel:CreateFontString("SLA_OutputMessageDescription", "OVERLAY");
-    SvensLootAddonGeneralOptions.panel.title:SetFont(GameFontNormal:GetFont(), 14, "NONE");
-    SvensLootAddonGeneralOptions.panel.title:SetPoint("TOPLEFT", 5, -(baseYOffSet + categoryNumber * categoryPadding + amountLinesWritten * lineHeight + boxesPlaced * boxSpacing));
-    amountLinesWritten = amountLinesWritten + 1
-
-    SLA:createSLA_Output_Message_Edit_Box(boxHeight, editBoxWidth, -(baseYOffSet + categoryNumber * categoryPadding + amountLinesWritten * lineHeight + boxesPlaced * boxSpacing))
-    boxesPlaced = boxesPlaced + 1
-    categoryNumber = categoryNumber + 1
-
-    -- Color changer
-    yOffSet = 3
-    SvensLootAddonGeneralOptions.panel.title = SvensLootAddonGeneralOptions.panel:CreateFontString("SLA_FontColorDescription", "OVERLAY");
-    SvensLootAddonGeneralOptions.panel.title:SetFont(GameFontNormal:GetFont(), 14, "NONE");
-    SvensLootAddonGeneralOptions.panel.title:SetPoint("TOPLEFT", 5, -(baseYOffSet + categoryNumber * categoryPadding + amountLinesWritten * lineHeight + boxesPlaced * boxSpacing));
-    amountLinesWritten = amountLinesWritten + 1
-    amountLinesWritten = amountLinesWritten + 1 --Another Time, because the Sliders have on line above
-    for i = 1, 3 do
-        SLA:createColorSlider(i, SvensLootAddonGeneralOptions.panel, rgb, -(baseYOffSet + categoryNumber * categoryPadding + amountLinesWritten * lineHeight + boxesPlaced * boxSpacing))
-    end
-    categoryNumber = categoryNumber + 1
-
-
-end
-
-function SLA:createSLA_Item_List_Edit_Box(height, width, y)
-    SLA_Item_List_Edit_Box = SLA:createEditBox("SLA_Item_List_Edit_Box", SvensLootAddonGeneralOptions.panel, height, width)
-    SLA_Item_List_Edit_Box:SetPoint("TOPLEFT", 40, y)
-    for _, v in pairs(SLA_itemsToTrackList) do
-        SLA_Item_List_Edit_Box:Insert("\"" .. v .. "\" ")
-    end
-    SLA_Item_List_Edit_Box:SetCursorPosition(0)
-
-    SLA_Item_List_Edit_Box:SetScript("OnEscapePressed", function(...)
-        SLA_Item_List_Edit_Box:ClearFocus()
-        SLA_Item_List_Edit_Box:SetText("")
-        for _, v in pairs(SLA_itemsToTrackList) do
-            SLA_Item_List_Edit_Box:Insert("\"" .. v .. "\" ")
-        end
-    end)
-    SLA_Item_List_Edit_Box:SetScript("OnEnterPressed", function(...)
-        SLA_Item_List_Edit_Box:ClearFocus()
-        SLA:saveItemList()
-    end)
-    SLA_Item_List_Edit_Box:SetScript("OnEnter", function(...)
-        GameTooltip:SetOwner(SLA_Item_List_Edit_Box, "ANCHOR_BOTTOM");
-        GameTooltip:SetText("Write names of items in double quotes, separated by spaces.\n"
-                .. "Eg: \"Linen Cloth\" \"Arcane Crystal\"")
-        GameTooltip:ClearAllPoints()
-        GameTooltip:Show()
-    end)
-    SLA_Item_List_Edit_Box:SetScript("OnLeave", function()
-        GameTooltip:Hide()
-    end)
-end
-
-function SLA:createSLA_Output_Message_Edit_Box(height, width, y)
-    SLA_Output_Message_Edit_Box = SLA:createEditBox("SLA_Output_Message_Box", SvensLootAddonGeneralOptions.panel, height, width)
-    SLA_Output_Message_Edit_Box:SetPoint("TOPLEFT", 40, y)
-    SLA_Output_Message_Edit_Box:Insert(SLA_output_message)
-    SLA_Output_Message_Edit_Box:SetCursorPosition(0)
-    SLA_Output_Message_Edit_Box:SetScript("OnEscapePressed", function(...)
-        SLA_Output_Message_Edit_Box:ClearFocus()
-        SLA_Output_Message_Edit_Box:SetText(SLA_output_message)
-    end)
-    SLA_Output_Message_Edit_Box:SetScript("OnEnterPressed", function(...)
-        SLA_Output_Message_Edit_Box:ClearFocus()
-        SLA:saveOutputMessage()
-    end)
-    SLA_Output_Message_Edit_Box:SetScript("OnEnter", function(...)
-        GameTooltip:SetOwner(SLA_Output_Message_Edit_Box, "ANCHOR_BOTTOM");
-        GameTooltip:SetText("Insert your message here.\nIN will be replaced with item name.\nI# will be replaced with amount of times item was found\nTS will be replaced with time stamp since recording / loot list reset")
-        GameTooltip:ClearAllPoints()
-        GameTooltip:Show()
-    end)
-    SLA_Output_Message_Edit_Box:SetScript("OnLeave", function()
-        GameTooltip:Hide()
-    end)
-end
-
-function SLA:populateChannelSubmenu(channelButtonList, channelList)
-    SvensLootAddonChannelOptions.panel.title = SvensLootAddonChannelOptions.panel:CreateFontString("SLA_Output_Channel_Description", "OVERLAY");
-    SvensLootAddonChannelOptions.panel.title:SetFont(GameFontNormal:GetFont(), 14, "NONE");
-    SvensLootAddonChannelOptions.panel.title:SetPoint("TOPLEFT", 5, -5);
-    -- Checkboxes channels and Edit Box for whispers
-    for i = 1, #channelList do
-        SLA:createCheckButtonChannel(i, 1, i, channelButtonList, channelList)
-    end
-    SLA:createResetChannelListButton(SvensLootAddonChannelOptions.panel, channelList, channelButtonList)
-end
-
-function SLA:createCheckButtonChannel(i, x, y, channelButtonList, channelList)
-    local YOffset = y * -24
-    local checkButton = CreateFrame("CheckButton", "SvensLootAddon_ChannelCheckButton" .. i, SvensLootAddonChannelOptions.panel, "UICheckButtonTemplate")
-    channelButtonList[i] = checkButton
-    checkButton:ClearAllPoints()
-    checkButton:SetPoint("TOPLEFT", x * 32, YOffset)
-    checkButton:SetSize(32, 32)
-
-    _G[checkButton:GetName() .. "Text"]:SetText(channelList[i])
-    _G[checkButton:GetName() .. "Text"]:SetFont(GameFontNormal:GetFont(), 14, "NONE")
-    for j = 1, #SLA_outputChannelList do
-        if (SLA_outputChannelList[j] == channelList[i]) then
-            channelButtonList[i]:SetChecked(true)
-        end
-    end
-
-    channelButtonList[i]:SetScript("OnClick", function()
-        if channelButtonList[i]:GetChecked() then
-            table.insert(SLA_outputChannelList, channelList[i])
-        else
-            local indexOfFoundValues = {}
-            for j = 1, #SLA_outputChannelList do
-                if (SLA_outputChannelList[j] == channelList[i]) then
-                    table.insert(indexOfFoundValues, j)
+}
+local generalOptions = { -- https://www.wowace.com/projects/ace3/pages/ace-config-3-0-options-tables
+    name = "",
+    type = "group",
+    args = {
+        itemListInput = {
+            order = 1,
+            type = "input",
+            name = "to be replaced",
+            multiline = true,
+            width = "double",
+            desc = "Put each item you want to track on a new line.",
+            get = function(_)
+                local listAsString = ""
+                for _, v in pairs(localAddon.db.char.itemsToTrack) do
+                    listAsString = listAsString .. v .. "\n"
+                end
+                return listAsString
+            end,
+            set = function(_, value)
+                localAddon.db.char.itemsToTrack = {}
+                for arg in string.gmatch(value, "[^\r\n]+") do
+                    table.insert(localAddon.db.char.itemsToTrack, arg)
                 end
             end
-            j = #indexOfFoundValues
-            while (j > 0) do
-                table.remove(SLA_outputChannelList, indexOfFoundValues[j])
-                j = j - 1;
+        },
+
+        chatFrameNameInput = {
+            order = 10,
+            type = "input",
+            name = "to be replaced",
+            width = "full",
+            desc = "Define Channel Frame you want SvensLootAddon to print to",
+            get = function(_)
+                return localAddon.db.char.chatFrameName
+            end,
+            set = function(_, value)
+                local isValidName = localAddon:setIndexOfChatFrame(value)
+                if (isValidName) then
+                    localAddon.db.char.chatFrameName = value
+                else
+                    _G["ChatFrame" .. localAddon.db.char.chatFrameIndex]:AddMessage(localAddon.db.char.color .. "Could not find channel name!")
+                end
             end
-        end
-    end)
+        },
 
-    -- Create Edit Box for whispers
-    if (channelList[i] == "Whisper") then
-        SLA_whisperFrame = SLA:createEditBox("SLA_WhisperListEditBox", SvensLootAddonChannelOptions.panel, 32, 400)
-        SLA_whisperFrame:SetPoint("TOP", 50, -24 * y)
-        for _, v in pairs(SLA_whisperList) do
-            SLA_whisperFrame:Insert(v .. " ")
-        end
-        SLA_whisperFrame:SetCursorPosition(0)
+        placeholderDescriptionOutputMessage = {
+            order = 20,
+            type = "description",
+            name = ""
+        },
 
-        SLA_whisperFrame:SetScript("OnEscapePressed", function(...)
-            SLA_whisperFrame:ClearFocus()
-            SLA_whisperFrame:SetText("")
-            for _, v in pairs(SLA_whisperList) do
-                SLA_whisperFrame:Insert(v .. " ")
+        outputMessageOption = {
+            order = 30,
+            type = "input",
+            width = "full",
+            name = "will be replaced",
+            desc = "Insert your message here.\nIN will be replaced with item name.\nI# will be replaced with amount of times item was found\nTS will be replaced with time stamp since recording/loot list reset",
+            get = function(_)
+                return localAddon.db.char.outputMessage
+            end,
+            set = function(_, value)
+                localAddon.db.char.outputMessage = value
             end
-        end)
-        SLA_whisperFrame:SetScript("OnEnterPressed", function(...)
-            SLA_whisperFrame:ClearFocus()
-            SLA:saveWhisperList()
-        end)
-        SLA_whisperFrame:SetScript("OnEnter", function(...)
-            GameTooltip:SetOwner(SLA_whisperFrame, "ANCHOR_BOTTOM");
-            GameTooltip:SetText("Separate names of people you want to annoy with whispers")
-            GameTooltip:ClearAllPoints()
-            GameTooltip:Show()
-        end)
-        SLA_whisperFrame:SetScript("OnLeave", function()
-            GameTooltip:Hide()
-        end)
+        },
+        placeholderDescription1 = {
+            order = 40,
+            type = "description",
+            name = ""
+        },
+        otherOptionsDescription = {
+            order = 50,
+            type = "description",
+            name = "will be replaced"
+        },
+        placeholderDescription12 = {
+            order = 51,
+            type = "description",
+            name = ""
+        },
+        miniMapButtonCheckbox = {
+            order = 52,
+            type = "toggle",
+            name = "Show Minimap Button",
+            get = function(_)
+                return not localAddon.db.char.minimap.hide
+            end,
+            set = function(_, value)
+                localAddon.db.char.minimap.hide = not value
+                if (value) then
+                    icon:Show("SvensLootAddon_dataObject")
+                else
+                    icon:Hide("SvensLootAddon_dataObject")
+                end
+            end
+        },
+        placeholderDescription69 = {
+            order = 69,
+            type = "description",
+            name = ""
+        },
+        fontColorDescription = {
+            order = 70,
+            type = "description",
+            name = "will be replaced"
+        },
+        placeholderDescription71 = {
+            order = 71,
+            type = "description",
+            name = ""
+        },
+        redColorSlider = {
+            order = 72,
+            type = "range",
+            width = "double",
+            name = "Red",
+            min = 0,
+            max = 255,
+            step = 1,
+            get = function(_)
+                return tonumber("0x" .. localAddon.db.char.color:sub(5, 6))
+            end,
+            set = function(_, value)
+                local rgb = {
+                    { color = "Red", value = localAddon.db.char.color:sub(5, 6) },
+                    { color = "Green", value = localAddon.db.char.color:sub(7, 8) },
+                    { color = "Blue", value = localAddon.db.char.color:sub(9, 10) }
+                }
+                rgbValue = localAddon:convertRGBDecimalToRGBHex(value)
+                localAddon.db.char.color = "|cff" .. rgbValue .. rgb[2].value .. rgb[3].value
+                localAddon:setPanelTexts()
+            end
+        },
+        placeholderDescription73 = {
+            order = 73,
+            type = "description",
+            name = ""
+        },
+        greenColorSlider = {
+            order = 74,
+            type = "range",
+            width = "double",
+            name = "Green",
+            min = 0,
+            max = 255,
+            step = 1,
+            get = function(_)
+                return tonumber("0x" .. localAddon.db.char.color:sub(7, 8))
+            end,
+            set = function(_, value)
+                local rgb = {
+                    { color = "Red", value = localAddon.db.char.color:sub(5, 6) },
+                    { color = "Green", value = localAddon.db.char.color:sub(7, 8) },
+                    { color = "Blue", value = localAddon.db.char.color:sub(9, 10) }
+                }
+                rgbValue = localAddon:convertRGBDecimalToRGBHex(value)
+                localAddon.db.char.color = "|cff" .. rgb[1].value .. rgbValue .. rgb[3].value
+                localAddon:setPanelTexts()
+            end
+        },
+        placeholderDescription75 = {
+            order = 75,
+            type = "description",
+            name = ""
+        },
+        blueColorSlider = {
+            order = 76,
+            type = "range",
+            width = "double",
+            name = "Blue",
+            min = 0,
+            max = 255,
+            step = 1,
+            get = function(_)
+                return tonumber("0x" .. localAddon.db.char.color:sub(9, 10))
+            end,
+            set = function(_, value)
+                local rgb = {
+                    { color = "Red", value = localAddon.db.char.color:sub(5, 6) },
+                    { color = "Green", value = localAddon.db.char.color:sub(7, 8) },
+                    { color = "Blue", value = localAddon.db.char.color:sub(9, 10) }
+                }
+                rgbValue = localAddon:convertRGBDecimalToRGBHex(value)
+                localAddon.db.char.color = "|cff" .. rgb[1].value .. rgb[2].value .. rgbValue
+                localAddon:setPanelTexts()
+            end
+        }
+    },
+}
+local channelOptions = { -- https://www.wowace.com/projects/ace3/pages/ace-config-3-0-options-tables
+    name = "replacedByColorString",
+    type = "group",
+    args = {
+        sayCheckbox = {
+            order = 0,
+            type = "toggle",
+            name = "Say",
+            desc = "Only works in instances",
+            get = function(_)
+                return localAddon.db.char.outputChannelList.Say
+            end,
+            set = function(_, value)
+                localAddon.db.char.outputChannelList.Say = value
+            end
+        },
+        placeholderDescription1 = {
+            order = 1,
+            type = "description",
+            name = ""
+        },
+        yellCheckbox = {
+            order = 2,
+            type = "toggle",
+            name = "Yell",
+            desc = "Only works in instances",
+            get = function(_)
+                return localAddon.db.char.outputChannelList.Yell
+            end,
+            set = function(_, value)
+                localAddon.db.char.outputChannelList.Yell = value
+            end
+        },
+        placeholderDescription2 = {
+            order = 3,
+            type = "description",
+            name = ""
+        },
+        printCheckbox = {
+            order = 4,
+            type = "toggle",
+            name = "Print",
+            descStyle = "",
+            get = function(_)
+                return localAddon.db.char.outputChannelList.Print
+            end,
+            set = function(_, value)
+                localAddon.db.char.outputChannelList.Print = value
+            end
+        },
+        placeholderDescription4 = {
+            order = 7,
+            type = "description",
+            name = ""
+        },
+        guildCheckbox = {
+            order = 8,
+            type = "toggle",
+            name = "Guild",
+            descStyle = "",
+            get = function(_)
+                return localAddon.db.char.outputChannelList.Guild
+            end,
+            set = function(_, value)
+                localAddon.db.char.outputChannelList.Guild = value
+            end
+        },
+        placeholderDescription5 = {
+            order = 9,
+            type = "description",
+            name = ""
+        },
+        raidCheckbox = {
+            order = 10,
+            type = "toggle",
+            name = "Raid",
+            descStyle = "",
+            get = function(_)
+                return localAddon.db.char.outputChannelList.Raid
+            end,
+            set = function(_, value)
+                localAddon.db.char.outputChannelList.Raid = value
+            end
+        },
+        placeholderDescription6 = {
+            order = 11,
+            type = "description",
+            name = ""
+        },
+        emoteCheckbox = {
+            order = 12,
+            type = "toggle",
+            name = "Emote",
+            descStyle = "",
+            get = function(_)
+                return localAddon.db.char.outputChannelList.Emote
+            end,
+            set = function(_, value)
+                localAddon.db.char.outputChannelList.Emote = value
+            end
+        },
+        placeholderDescription7 = {
+            order = 13,
+            type = "description",
+            name = ""
+        },
+        partyCheckbox = {
+            order = 14,
+            type = "toggle",
+            name = "Party",
+            descStyle = "",
+            get = function(_)
+                return localAddon.db.char.outputChannelList.Party
+            end,
+            set = function(_, value)
+                localAddon.db.char.outputChannelList.Party = value
+            end
+        },
+        placeholderDescription8 = {
+            order = 15,
+            type = "description",
+            name = ""
+        },
+        officerCheckbox = {
+            order = 16,
+            type = "toggle",
+            name = "Officer",
+            descStyle = "",
+            get = function(_)
+                return localAddon.db.char.outputChannelList.Officer
+            end,
+            set = function(_, value)
+                localAddon.db.char.outputChannelList.Officer = value
+            end
+        },
+        placeholderDescription9 = {
+            order = 17,
+            type = "description",
+            name = ""
+        },
+        raidWarningCheckbox = {
+            order = 18,
+            type = "toggle",
+            name = "Raid Warning",
+            descStyle = "",
+            get = function(_)
+                return localAddon.db.char.outputChannelList.Raid_Warning
+            end,
+            set = function(_, value)
+                localAddon.db.char.outputChannelList.Raid_Warning = value
+            end
+        },
+        placeholderDescription10 = {
+            order = 19,
+            type = "description",
+            name = ""
+        },
+        battlegroundCheckbox = {
+            order = 20,
+            type = "toggle",
+            name = "Battleground",
+            descStyle = "",
+            get = function(_)
+                return localAddon.db.char.outputChannelList.Battleground
+            end,
+            set = function(_, value)
+                localAddon.db.char.outputChannelList.Battleground = value
+            end
+        },
+        placeholderDescription11 = {
+            order = 21,
+            type = "description",
+            name = ""
+        },
+        whisperCheckbox = {
+            order = 22,
+            type = "toggle",
+            name = "Whisper",
+            descStyle = "",
+            get = function(_)
+                return localAddon.db.char.outputChannelList.Whisper
+            end,
+            set = function(_, value)
+                localAddon.db.char.outputChannelList.Whisper = value
+            end
+        },
+        whisperListInput = {
+            order = 23,
+            type = "input",
+            name = "Set Friends to Whisper to",
+            multiline = true,
+            width = "double",
+            desc = "Put each name you want to whisper to on a new line.",
+            get = function(_)
+                local listAsString = ""
+                for _, v in pairs(localAddon.db.char.whisperList) do
+                    listAsString = listAsString .. v .. "\n"
+                end
+                return listAsString
+            end,
+            set = function(_, value)
+                localAddon.db.char.whisperList = {}
+                for arg in string.gmatch(value, "[^\r\n]+") do
+                    table.insert(localAddon.db.char.whisperList, arg)
+                end
+            end
+        },
+        placeholderDescription12 = {
+            order = 24,
+            type = "description",
+            name = ""
+        },
+        battleNetwhisperCheckbox = {
+            order = 25,
+            type = "toggle",
+            name = "Whisper Bnet Name",
+            descStyle = "",
+            get = function(_)
+                return localAddon.db.char.outputChannelList.battleNetWhisper
+            end,
+            set = function(_, value)
+                localAddon.db.char.outputChannelList.battleNetWhisper = value
+            end
+        },
+        battleNetWhisperListInput = {
+            order = 26,
+            type = "input",
+            name = "Set Battle.net Friends to Whisper to",
+            multiline = true,
+            width = "double",
+            desc = "Put each battle net tag of people in your friend list on a new line.\n",
+            get = function(_)
+                local listAsString = ""
+                for k, _ in pairs(localAddon.db.char.battleNetWhisperBattleNetTagToId) do
+                    listAsString = listAsString .. k .. "\n"
+                end
+                return listAsString
+            end,
+            set = function(_, value)
+                local bnetWhisperList = {}
+                for arg in string.gmatch(value, "[^\r\n]+") do
+                    bnetWhisperList[arg] = true
+                end
+
+                local isAboveClassic = (tonumber(select(4, GetBuildInfo())) > 82000)
+
+                local numBNetTotal, _, _, _ = BNGetNumFriends()
+                localAddon.db.char.battleNetWhisperBattleNetTagToId = {}
+                for i = 1, numBNetTotal do
+                    if (not isAboveClassic) then
+                        bnetIDAccount, _, battleTag, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _ = BNGetFriendInfo(i)
+                    else
+                        local acc = C_BattleNet.GetFriendAccountInfo(i)
+                        bnetIDAccount = acc.bnetAccountID
+                        battleTag = acc.battleTag
+                    end
+                    --local accountName = battleTag:gsub("(.*)#.*$", "%1")
+                    if (bnetWhisperList[battleTag] == true) then
+                        localAddon.db.char.battleNetWhisperBattleNetTagToId[battleTag] = bnetIDAccount;
+                    end
+                end
+
+                for k, _ in pairs(bnetWhisperList) do
+                    if (localAddon.db.char.battleNetWhisperBattleNetTagToId[k] == nil) then
+                        _G["ChatFrame" .. localAddon.db.char.chatFrameIndex]:AddMessage(localAddon.db.char.color .. "Bnet account name " .. k .. " not found.")
+                    end
+                end
+            end
+        },
+        placeholderDescription14 = {
+            order = 33,
+            type = "description",
+            name = ""
+        },
+        trainEmoteCheckbox = {
+            order = 34,
+            type = "toggle",
+            name = "Do Train Emote",
+            descStyle = "",
+            get = function(_)
+                return localAddon.db.char.outputChannelList.Train_emote
+            end,
+            set = function(_, value)
+                localAddon.db.char.outputChannelList.Train_emote = value
+            end
+        },
+    }
+}
+
+function localAddon:loadAddon()
+    self.db = AceDatabase:New("SvensLootAddonDB", defaults)
+    AceConfig:RegisterOptionsTable("SvensLootAddon_MainOptions", mainOptions)
+    AceConfig:RegisterOptionsTable("SvensLootAddon_GeneralOptions", generalOptions)
+    AceConfig:RegisterOptionsTable("SvensLootAddon_ChannelOptions", channelOptions)
+    self.mainOptionsFrame = AceConfigDialog:AddToBlizOptions("SvensLootAddon_MainOptions", "Svens Loot Addon")   -- https://www.wowace.com/projects/ace3/pages/api/ace-config-dialog-3-0
+    AceConfigDialog:AddToBlizOptions("SvensLootAddon_GeneralOptions", "General options", "Svens Loot Addon")
+    AceConfigDialog:AddToBlizOptions("SvensLootAddon_ChannelOptions", "Channel options", "Svens Loot Addon")
+
+    self:setPanelTexts()
+
+    self:realignBattleNetTagToId()
+
+    if (not self.db.char.isMigratedToAce) then
+        self:migrateToAce()
     end
 end
 
-function SLA:createResetChannelListButton(parentFrame, channelList, channelButtonList)
-    local resetChannelListButton = CreateFrame("Button", "ResetButtonChannels", parentFrame, "UIPanelButtonTemplate");
-    resetChannelListButton:ClearAllPoints()
-    resetChannelListButton:SetPoint("TOPLEFT", 32, ((#channelList) + 1) * -24 - 8)
-    resetChannelListButtonText = "Clear Channel List (May fix bugs after updating)"
-    resetChannelListButton:SetSize(resetChannelListButtonText:len() * 7, 32)
-    resetChannelListButton:SetText(resetChannelListButtonText)
-    resetChannelListButton:SetScript("OnClick", function(...)
-        for i = 1, #channelButtonList do
-            channelButtonList[i]:SetChecked(false)
-        end
-        SLA_outputChannelList = {}
-    end)
-end
-
-function SLA:createColorSlider(i, panel, rgb, yOffSet)
-    local slider = CreateFrame("Slider", "SLA_Slider" .. i, panel, "OptionsSliderTemplate")
-    slider:ClearAllPoints()
-    slider:SetPoint("TOPLEFT", 32, -16 * 2 * (i - 1) + yOffSet)
-    slider:SetSize(256, 16)
-    slider:SetMinMaxValues(0, 255)
-    slider:SetValueStep(1)
-    _G[slider:GetName() .. "Low"]:SetText("|c00ffcc00Min:|r 0")
-    _G[slider:GetName() .. "High"]:SetText("|c00ffcc00Max:|r 255")
-    slider:SetScript("OnValueChanged", function(_, _, _)
-        local value = floor(slider:GetValue())
-        _G[slider:GetName() .. "Text"]:SetText("|c00ffcc00" .. rgb[i].color .. "|r " .. value)
-        _G[slider:GetName() .. "Text"]:SetFont(GameFontNormal:GetFont(), 14, "NONE")
-        rgb[i].value = SLA:convertRGBDecimalToRGBHex(value)
-        SLA_color = "|cff" .. rgb[1].value .. rgb[2].value .. rgb[3].value
-        SLA:setPanelTexts()
-    end)
-    slider:SetValue(tonumber("0x" .. rgb[i].value))
-
-end
-
-function SLA:saveWhisperList()
-    SLA_whisperList = {}
-    for arg in string.gmatch(SLA_whisperFrame:GetText(), "%S+") do
-        table.insert(SLA_whisperList, arg)
-    end
-end
-
-function SLA:saveOutputMessage()
-    --TODO
-    SLA_output_message = SLA_Output_Message_Edit_Box:GetText()
-end
-
-function SLA:createEditBox(name, parentFrame, height, width)
-    local eb = CreateFrame("EditBox", name, parentFrame, "InputBoxTemplate")
-    eb:ClearAllPoints()
-    eb:SetAutoFocus(false)
-    eb:SetHeight(height)
-    eb:SetWidth(width)
-    eb:SetFontObject("ChatFontNormal")
-    return eb
-end
-
-function SLA:saveItemList()
-    SLA_itemsToTrackList = {}
-    for arg in string.gmatch(SLA_Item_List_Edit_Box:GetText(), '"(.-)"') do
-        table.insert(SLA_itemsToTrackList, arg)
-    end
-end
-
-function SLA:convertRGBDecimalToRGBHex(decimal)
+function localAddon:convertRGBDecimalToRGBHex(decimal)
+    local result
     local numbers = "0123456789ABCDEF"
-    local result = numbers:sub(1 + (decimal / 16), 1 + (decimal / 16)) .. numbers:sub(1 + (decimal % 16), 1 + (decimal % 16))
+    result = numbers:sub(1 + (decimal / 16), 1 + (decimal / 16)) .. numbers:sub(1 + (decimal % 16), 1 + (decimal % 16))
     return result
 end
 
-function SLA:setPanelTexts()
-    SLA_GeneralOptionsDescription:SetText(SLA_color .. "Choose sub menu to change options")
-    SLA_OutputMessageDescription:SetText(SLA_color .. "Output Message")
-    SvensLootAddonGeneralOptions.panel.title:SetText(SLA_color .. "Change color of Font")
-    SLA_FontColorDescription:SetText(SLA_color .. "Change color of Font")
-    SLA_Output_Channel_Description:SetText(SLA_color .. "Output Channel")
-    SLA_Item_Description:SetText(SLA_color .. "Item List:")
+function localAddon:setPanelTexts()
+    mainOptions.name = self.db.char.color .. "Choose sub menu to change options."
+    mainOptions.args.mainDescription.name = self.db.char.color .. "Command line options:\n\n"
+            .. "/sla list: lists highest crits of each spell.\n"
+            .. "/sla report: report highest crits of each spell to channel list.\n"
+            .. "/sla clear: delete list of highest crits.\n"
+            .. "/sla config: Opens this config page."
+
+    generalOptions.args.chatFrameNameInput.name = self.db.char.color .. "Item List"
+    generalOptions.args.chatFrameNameInput.name = self.db.char.color .. "Chat Frame to print to"
+    generalOptions.args.outputMessageOption.name = self.db.char.color .. "Output Message"
+    generalOptions.args.otherOptionsDescription.name = self.db.char.color .. "Other Options"
+    generalOptions.args.fontColorDescription.name = self.db.char.color .. "Change Color of Font"
+    channelOptions.name = self.db.char.color .. "Output Channel"
 end
 
-function SLA:fixItemList()
-    if not SLA_foundItemsList then
-        SLA_isItemListFixed = true
-        do return end
-    end
-    local foundSomething = false
-    local i = 1
-    while i <= #SLA_foundItemsList do
-        local continue = false
-        for j = (i + 1), #SLA_foundItemsList do
-            local currentItem = SLA_foundItemsList[i][1]
-            local currentItemName = GetItemInfo(currentItem)
-            local currentItemAmount = SLA_foundItemsList[i][2]
-
-            local comparedItem = SLA_foundItemsList[j][1]
-            local comparedItemName = GetItemInfo(comparedItem)
-            local comparedItemAmount = SLA_foundItemsList[j][2]
-
-            -- sometimes, not everything is loaded yet. Then quit
-            if not currentItemName or not comparedItemName then
-                do return end
-            end
-
-            if (currentItemName == comparedItemName) then
-                print(SLA_color.."Found Match: "..currentItemName.."  "..comparedItemName)
-                foundSomething = true
-                currentItemAmount = currentItemAmount + comparedItemAmount
-                SLA_foundItemsList[i][2] = currentItemAmount
-                table.remove(SLA_foundItemsList, j)
-                continue = true
-                break
-            end
-        end
-        if not continue then
-            i = i + 1
+-- Taken and edited from BamModRevived on WoWInterface. Thanks to Sylen
+-- We use this to get the index of our output channel
+function localAddon:setIndexOfChatFrame(chatFrameName)
+    for i = 1, NUM_CHAT_WINDOWS do
+        local chatWindowName = GetChatWindowInfo(i)
+        if chatWindowName == chatFrameName then
+            self.db.char.chatFrameIndex = i
+            return true
         end
     end
-    SLA_isItemListFixed = true
-    return foundSomething
+    return false
+end
+
+function localAddon:realignBattleNetTagToId()
+    local numBNetTotal, _, _, _ = BNGetNumFriends()
+    local isAboveClassic = select(4, GetBuildInfo()) > 82000
+
+    for i = 1, numBNetTotal do
+        local bnetIDAccount, battleTag
+        if (not isAboveClassic) then
+            bnetIDAccount, _, battleTag, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _ = BNGetFriendInfo(i)
+        else
+            local acc = C_BattleNet.GetFriendAccountInfo(i)
+            bnetIDAccount = acc.bnetAccountID
+            battleTag = acc.battleTag
+        end
+        --local accountName = battleTag:gsub("(.*)#.*$", "%1")
+        if (localAddon.db.char.battleNetWhisperBattleNetTagToId[battleTag] ~= nil) then
+            localAddon.db.char.battleNetWhisperBattleNetTagToId[battleTag] = bnetIDAccount;
+        end
+    end
+end
+
+function localAddon:migrateToAce()
+    self:Print("Migrating database for Svens Loot Addon. You should see this message only once.")
+
+    if (SLA_itemsToTrackList ~= nil) then
+        self.db.char.itemsToTrack = SLA_itemsToTrackList
+    end
+    self:Print("Successfully migrated tracked items list")
+
+    if (SLA_foundItemsList ~= nil) then
+        self.db.char.foundItems = SLA_foundItemsList
+        self:Print("Successfully migrated found items list")
+    end
+
+    if (SLA_whisperList ~= nil) then
+        self.db.char.whisperList = SLA_whisperList
+        self:Print("Successfully migrated whisper list")
+    end
+
+    if (SLA_output_message ~= nil) then
+        self.db.char.outputMessage = SLA_output_message
+        self:Print("Successfully migrated output message")
+    end
+
+    if (SLA_color ~= nil) then
+        self.db.char.color = SLA_color
+        self:Print("Successfully migrated color")
+    end
+
+    if (SLA_timeStamp ~= nil) then
+        self.db.char.timeStamp = SLA_timeStamp
+        self:Print("Successfully migrated timestamp")
+    end
+
+    --migrate outputChannelList
+    local oldChannelList = SLA_outputChannelList
+    if (oldChannelList ~= nil) then
+        local newChannelList = self.db.char.outputChannelList
+        if (oldChannelList["Say"] ~= nil) then
+            newChannelList.Say = true;
+        end
+        if (oldChannelList["Yell"] ~= nil) then
+            newChannelList.Yell = true;
+        end
+        if (oldChannelList["Print"] ~= nil) then
+            newChannelList.Print = true;
+        end
+        if (oldChannelList["Guild"] ~= nil) then
+            newChannelList.Guild = true;
+        end
+        if (oldChannelList["Raid"] ~= nil) then
+            newChannelList.Raid = true;
+        end
+        if (oldChannelList["Emote"] ~= nil) then
+            newChannelList.Emote = true;
+        end
+        if (oldChannelList["Party"] ~= nil) then
+            newChannelList.Party = true;
+        end
+        if (oldChannelList["Officer"] ~= nil) then
+            newChannelList.Officer = true;
+        end
+        if (oldChannelList["Raid_Warning"] ~= nil) then
+            newChannelList.Raid_Warning = true;
+        end
+        if (oldChannelList["Battleground"] ~= nil) then
+            newChannelList.Battleground = true;
+        end
+        if (oldChannelList["Whisper"] ~= nil) then
+            newChannelList.Whisper = true;
+        end
+        self:Print("Successfully migrated output channel list")
+    end
+
+    self.db.char.isMigratedToAce = true
+    self:Print("Finished migrating database for Svens Loot Addon. You should see this message only once.")
+
 end

@@ -1,7 +1,9 @@
-function SLA:AddToLootList(itemLink)
-    if (not SLA_foundItemsList) then
-        SLA_foundItemsList = {}
-        SLA_timeStamp = date()
+local localAddon = SvensLootAddon
+
+function localAddon:addToLootList(itemLink)
+    local foundItems = self.db.char.foundItems
+    if (not self.db.char.timeStamp) then
+        self.db.char.timeStamp = date()
     end
 
     local amountItem = 1
@@ -11,50 +13,54 @@ function SLA:AddToLootList(itemLink)
     end
 
     local itemIndex = -1
-    for i = 1, #SLA_foundItemsList do
-        local nameOfFoundItem = GetItemInfo(itemLink)
-        local nameOfCurrentItemInList = GetItemInfo(SLA_foundItemsList[i][1])
+    local nameOfFoundItem = GetItemInfo(itemLink)
+    for i = 1, #foundItems do
+        local nameOfCurrentItemInList = GetItemInfo(foundItems[i][1])
 
         if (nameOfCurrentItemInList == nameOfFoundItem) then
-            SLA_foundItemsList[i][2] = SLA_foundItemsList[i][2] + amountItem
+            foundItems[i][2] = foundItems[i][2] + amountItem
             itemIndex = i
             break
         end
     end
 
     if (itemIndex == -1) then
-        table.insert(SLA_foundItemsList, { itemLink, amountItem })
+        table.insert(foundItems, { itemLink, amountItem })
         return amountItem
     end
 
-    return SLA_foundItemsList[itemIndex][2]
+    return foundItems[itemIndex][2]
 end
 
-function SLA:clearLootList()
-    SLA_foundItemsList = {}
-    SLA_timeStamp = date()
-    print(SLA_color .. "Loot list cleared!")
+function localAddon:clearLootList()
+    self.db.char.foundItems = {}
+    self.db.char.timeStamp = date()
+    _G["ChatFrame" .. self.db.char.chatFrameIndex]:AddMessage(self.db.char.color .. "Loot list cleared!")
 end
 
-function SLA:listLootList()
-    if (SLA_foundItemsList == nil) or (next(SLA_foundItemsList) == nil) then
-        print(SLA_color .. "Loot list empty.")
+function localAddon:listLootList()
+    local foundItems = self.db.char.foundItems
+    if (foundItems == nil) or (next(foundItems) == nil) then
+        _G["ChatFrame" .. self.db.char.chatFrameIndex]:AddMessage(self.db.char.color .. "Loot list empty.")
     else
-        print(SLA_color .. "Loot report for items since " .. SLA_timeStamp .. ": ")
-        for i = 1, #SLA_foundItemsList do
-            print(SLA_color .. "Found " .. SLA_foundItemsList[i][1] .. " in total " .. SLA_foundItemsList[i][2] .. " times.")
+        local timeStamp = self.db.char.timeStamp
+        _G["ChatFrame" .. self.db.char.chatFrameIndex]:AddMessage(self.db.char.color .. "Loot report for items since " .. timeStamp .. ": ")
+        for i = 1, #foundItems do
+            _G["ChatFrame" .. self.db.char.chatFrameIndex]:AddMessage(self.db.char.color .. "Found " .. foundItems[i][1] .. " " .. foundItems[i][2] .. " times.")
         end
     end
 end
 
-function SLA:reportLootList()
-    if (SLA_foundItemsList == nil) or (next(SLA_foundItemsList) == nil) then
-        print(SLA_color .. "Loot list empty.")
+function localAddon:reportLootList()
+    local foundItems = self.db.char.foundItems
+    if (foundItems == nil) or (next(foundItems) == nil) then
+        _G["ChatFrame" .. self.db.char.chatFrameIndex]:AddMessage(self.db.char.color .. "Loot list empty.")
     else
-        SLA:send_messages_from_outputChannelList("Loot report for items since " .. SLA_timeStamp .. ": ", "", "")
-        local message = "Found IN in total I# times."
-        for i = 1, #SLA_foundItemsList do
-            SLA:send_messages_from_outputChannelList(message, SLA_foundItemsList[i][1], SLA_foundItemsList[i][2])
+        local timeStamp = self.db.char.timeStamp
+        self:send_messages_from_outputChannelList("Loot report for items since " .. timeStamp .. ": ", "", "", true)
+        local message = "Found IN I# times."
+        for i = 1, #foundItems do
+            self:send_messages_from_outputChannelList(message, foundItems[i][1], foundItems[i][2], true)
         end
     end
 end
