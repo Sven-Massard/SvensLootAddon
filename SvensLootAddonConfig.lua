@@ -68,7 +68,12 @@ local generalOptions = { -- https://www.wowace.com/projects/ace3/pages/ace-confi
             set = function(_, value)
                 localAddon.db.char.itemsToTrack = {}
                 for arg in string.gmatch(value, "[^\r\n]+") do
-                    table.insert(localAddon.db.char.itemsToTrack, arg)
+                    if (string.match(arg, "^|c%x+|Hitem:%d+:") ~= nil) then
+                        local itemName = select(1, GetItemInfo(arg))
+                        table.insert(localAddon.db.char.itemsToTrack, itemName)
+                    else
+                        table.insert(localAddon.db.char.itemsToTrack, arg)
+                    end
                 end
             end
         },
