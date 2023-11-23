@@ -28,7 +28,8 @@ function localAddon:CHAT_MSG_LOOT(_, msg, ...)
             local itemLink = msg:gsub(LootString, ""):gsub("%.", "")
             local timesItemFound = self:addToLootList(itemLink)
             local outputMessage = self.db.char.outputMessage
-            self:send_messages_from_outputChannelList(outputMessage, itemLink, timesItemFound, false)
+            local itemLinkWithoutAmount = select(2, GetItemInfo(itemLink))
+            self:send_messages_from_outputChannelList(outputMessage, itemLinkWithoutAmount, timesItemFound, false)
         end
     end
 end

@@ -13,7 +13,7 @@ function localAddon:addToLootList(itemLink)
     end
 
     local itemIndex = -1
-    local nameOfFoundItem = GetItemInfo(itemLink)
+    local nameOfFoundItem, itemLinkWithoutAmount = GetItemInfo(itemLink)
     for i = 1, #foundItems do
         local nameOfCurrentItemInList = GetItemInfo(foundItems[i][1])
 
@@ -25,7 +25,7 @@ function localAddon:addToLootList(itemLink)
     end
 
     if (itemIndex == -1) then
-        table.insert(foundItems, { itemLink, amountItem })
+        table.insert(foundItems, { itemLinkWithoutAmount, amountItem })
         return amountItem
     end
 
