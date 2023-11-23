@@ -18,8 +18,6 @@ Libs\AceDB-3.0\AceDB-3.0.xml
 Libs\AceConsole-3.0\AceConsole-3.0.xml
 Libs\AceGUI-3.0\AceGUI-3.0.xml
 Libs\AceConfig-3.0\AceConfig-3.0.xml
-Libs\LibDBIcon-1.0\embeds.xml
-Libs\LibDBIcon-1.0\LibDBIcon-1.0\lib.xml
 Libs\LibDropDownMenu\LibDropDownMenu.xml
 SvensLootAddon.lua
 SvensLootAddonConfig.lua
