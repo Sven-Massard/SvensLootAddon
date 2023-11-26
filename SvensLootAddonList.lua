@@ -1,15 +1,9 @@
 local localAddon = SvensLootAddon
 
-function localAddon:addToLootList(itemLink)
+function localAddon:addToLootList(itemLink, amount)
     local foundItems = self.db.char.foundItems
     if (not self.db.char.timeStamp) then
         self.db.char.timeStamp = date()
-    end
-
-    local amountItem = 1
-
-    if not (string.match(itemLink, ('x%d*$')) == nil) then
-        amountItem = string.match(itemLink, ("%d*$"))
     end
 
     local itemIndex = -1
@@ -18,15 +12,15 @@ function localAddon:addToLootList(itemLink)
         local nameOfCurrentItemInList = GetItemInfo(foundItems[i][1])
 
         if (nameOfCurrentItemInList == nameOfFoundItem) then
-            foundItems[i][2] = foundItems[i][2] + amountItem
+            foundItems[i][2] = foundItems[i][2] + amount
             itemIndex = i
             break
         end
     end
 
     if (itemIndex == -1) then
-        table.insert(foundItems, { itemLinkWithoutAmount, amountItem })
-        return amountItem
+        table.insert(foundItems, { itemLinkWithoutAmount, amount })
+        return amount
     end
 
     return foundItems[itemIndex][2]

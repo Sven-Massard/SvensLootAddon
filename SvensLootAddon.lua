@@ -24,12 +24,12 @@ function localAddon:CHAT_MSG_LOOT(_, msg, ...)
         return
     end
 
-    local itemLink = string.match(msg, "|c.-|h|r")
+    local itemLink, amount = self:extractItemLinkAndAmount(msg)
     local itemsToTrackList = self.db.char.itemsToTrack
     local nameOfFoundItem, _ = GetItemInfo(itemLink)
     for i = 1, #itemsToTrackList do
         if (nameOfFoundItem == itemsToTrackList[i]) then
-            local timesItemFound = self:addToLootList(itemLink)
+            local timesItemFound = self:addToLootList(itemLink, amount)
             local outputMessage = self.db.char.outputMessage
             local itemLinkWithoutAmount = select(2, GetItemInfo(itemLink))
             self:send_messages_from_outputChannelList(outputMessage, itemLinkWithoutAmount, timesItemFound, false)
@@ -142,4 +142,15 @@ function localAddon:SlashCommand(msg)
     else
         _G["ChatFrame" .. self.db.char.chatFrameIndex]:AddMessage(self.db.char.color .. "Error: Unknown command")
     end
+end
+
+function localAddon:extractItemLinkAndAmount(msg)
+    -- The LOOT_ITEM_SELF string in Retail and Classic differs by having a full stop at the end.
+    -- https://www.townlong-yak.com/framexml/live/GlobalStrings.lua
+    -- https://www.townlong-yak.com/framexml/classic/GlobalStrings.lua
+    -- https://www.townlong-yak.com/framexml/era/GlobalStrings.lua
+    local itemLink = string.match(msg, "|c.-|h|r")
+    local amount = string.match(msg, "x(%d+)%.*$") or 1
+
+    return itemLink, amount
 end
