@@ -18,18 +18,22 @@ function localAddon:OnInitialize()
 end
 
 function localAddon:CHAT_MSG_LOOT(_, msg, ...)
-    local LootString = LOOT_ITEM_SELF:gsub("%%s.", "")
+    -- return if e.g. buy or mailbox message
+    local lootString = LOOT_ITEM_SELF:gsub("%%s", ""):gsub("%.$", "")
+    if string.sub(msg, 1, #lootString) ~= lootString then
+        return
+    end
 
+    local itemLink = string.match(msg, "|c.-|h|r")
     local itemsToTrackList = self.db.char.itemsToTrack
-
+    local nameOfFoundItem, _ = GetItemInfo(itemLink)
     for i = 1, #itemsToTrackList do
-        -- Thanks to EasyLoot for strmatch
-        if (strmatch(msg, LootString .. ".*" .. itemsToTrackList[i] .. ".*")) then
-            local itemLink = msg:gsub(LootString, ""):gsub("%.", "")
+        if (nameOfFoundItem == itemsToTrackList[i]) then
             local timesItemFound = self:addToLootList(itemLink)
             local outputMessage = self.db.char.outputMessage
             local itemLinkWithoutAmount = select(2, GetItemInfo(itemLink))
             self:send_messages_from_outputChannelList(outputMessage, itemLinkWithoutAmount, timesItemFound, false)
+            break
         end
     end
 end
