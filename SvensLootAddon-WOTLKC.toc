@@ -1,4 +1,4 @@
-## Interface: 100200
+## Interface: 30403
 ## Title: Svens Loot AddOn
 ## Author: Verband
 ## Version: 2
