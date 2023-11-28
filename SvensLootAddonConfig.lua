@@ -202,6 +202,7 @@ local generalOptions = { -- https://www.wowace.com/projects/ace3/pages/ace-confi
             order = 55,
             type = "toggle",
             name = "Show Minimap Button",
+            desc = "Note that button collector addons manage minimap visibility.\nSo this checkbox might not do anything.",
             get = function(_)
                 return not localAddon.db.char.minimap.hide
             end,
