@@ -136,6 +136,8 @@ local generalOptions = { -- https://www.wowace.com/projects/ace3/pages/ace-confi
             order = 52,
             type = "toggle",
             name = "Suppress Loot Message of tracked items",
+            desc = "Removes the standard loot message for tracked items.\n",
+            width = "double",
             get = function(_)
                 return localAddon.db.char.suppressLootMessage
             end,
