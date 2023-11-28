@@ -1,8 +1,54 @@
 local localAddon = SvensLootAddon
 
+local SvensLootAddon_ldb = LibStub("LibDataBroker-1.1")
 local AceConfig = LibStub("AceConfig-3.0")
 local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 local AceDatabase = LibStub("AceDB-3.0")
+local icon = LibStub("LibDBIcon-1.0")
+local lib = LibStub("LibDropDownMenu");
+
+local menuFrame = lib.Create_DropDownMenu("MyAddOn_DropDownMenu");
+local menuList = {
+    { text = "Loot List options", isNotRadio = true, notCheckable = true, hasArrow = true,
+      menuList = {
+          { text = "List Loot", isNotRadio = true, notCheckable = true,
+            func = function()
+                localAddon:listLootList();
+            end
+          },
+
+          { text = "Report Loot", isNotRadio = true, notCheckable = true,
+            func = function()
+                localAddon:reportLootList();
+            end
+          },
+
+          { text = "Clear Loot", isNotRadio = true, notCheckable = true,
+            func = function()
+                localAddon:clearLootList();
+            end
+          },
+      }
+    },
+
+    { text = "Open config", isNotRadio = true, notCheckable = true,
+      func = function()
+          InterfaceOptionsFrame_OpenToCategory(localAddon.mainOptionsFrame)
+      end
+    },
+    { text = "Close menu", isNotRadio = true, notCheckable = true },
+};
+local MinimapIcon = SvensLootAddon_ldb:NewDataObject("SvensLootAddon_dataObject", {
+    type = "data source",
+    label = "SvensLootAddon_MinimapButton",
+    text = "SvensLootAddon Minimap Icon",
+    icon = "Interface\\AddOns\\SvensLootAddon\\textures\\LootbagIcon",
+    OnClick = function(_, button)
+        if button == "LeftButton" or button == "RightButton" then
+            lib.EasyMenu(menuList, menuFrame, "LibDBIcon10_SvensLootAddon_dataObject", 0, 0, "MENU");
+        end
+    end,
+})
 
 local defaults = {
     char = {
@@ -145,22 +191,29 @@ local generalOptions = { -- https://www.wowace.com/projects/ace3/pages/ace-confi
                 localAddon.db.char.suppressLootMessage = value
             end
         },
-        --miniMapButtonCheckbox = {
-        --    order = 55,
-        --    type = "toggle",
-        --    name = "Show Minimap Button",
-        --    get = function(_)
-        --        return not localAddon.db.char.minimap.hide
-        --    end,
-        --    set = function(_, value)
-        --        localAddon.db.char.minimap.hide = not value
-        --        if (value) then
-        --            icon:Show("SvensLootAddon_dataObject")
-        --        else
-        --            icon:Hide("SvensLootAddon_dataObject")
-        --        end
-        --    end
-        --},
+
+        placeholderDescription54 = {
+            order = 54,
+            type = "description",
+            name = ""
+        },
+
+        miniMapButtonCheckbox = {
+            order = 55,
+            type = "toggle",
+            name = "Show Minimap Button",
+            get = function(_)
+                return not localAddon.db.char.minimap.hide
+            end,
+            set = function(_, value)
+                localAddon.db.char.minimap.hide = not value
+                if (value) then
+                    icon:Show("SvensLootAddon_dataObject")
+                else
+                    icon:Hide("SvensLootAddon_dataObject")
+                end
+            end
+        },
         placeholderDescription69 = {
             order = 69,
             type = "description",
@@ -555,6 +608,13 @@ function localAddon:loadAddon()
     self:setPanelTexts()
 
     self:realignBattleNetTagToId()
+
+    icon:Register("SvensLootAddon_dataObject", MinimapIcon, self.db.char.minimap)
+    if (not self.db.char.minimap.hide) then
+        icon:Show("SvensLootAddon_dataObject")
+    else
+        icon:Hide("SvensLootAddon_dataObject")
+    end
 
     if (not self.db.char.isMigratedToAce) then
         self:migrateToAce()
