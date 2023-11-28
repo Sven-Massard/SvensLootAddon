@@ -5,6 +5,7 @@ local localAddon = SvensLootAddon
 function localAddon:OnEnable()
     self:RegisterEvent("CHAT_MSG_LOOT")
     ChatFrame_AddMessageEventFilter("CHAT_MSG_SYSTEM", SLA_suppressWhisperMessage)
+    ChatFrame_AddMessageEventFilter("CHAT_MSG_LOOT", SLA_suppressLootMessage)
 end
 
 function localAddon:OnDisable()
@@ -18,9 +19,7 @@ function localAddon:OnInitialize()
 end
 
 function localAddon:CHAT_MSG_LOOT(_, msg, ...)
-    -- return if e.g. buy or mailbox message
-    local lootString = LOOT_ITEM_SELF:gsub("%%s", ""):gsub("%.$", "")
-    if string.sub(msg, 1, #lootString) ~= lootString then
+    if not self:isMessageStartingWithLootItemSelfString(msg) then
         return
     end
 
@@ -118,7 +117,20 @@ function SLA_suppressWhisperMessage(_, _, msg, _, ...)
         end
     end
     return isNameInWhisperList
+end
 
+-- Function for event filter for CHAT_MSG_LOOT to suppress message of player on whisper list being offline when being whispered to
+function SLA_suppressLootMessage(_, _, msg, _, ...)
+    if not localAddon:isMessageStartingWithLootItemSelfString(msg) and not localAddon.db.char.suppressLootMessage then
+        return false
+    end
+
+    local itemLink, _ = localAddon:extractItemLinkAndAmount(msg)
+    if localAddon:isItemInItemsToTrackList(itemLink) then
+        return true
+    end
+
+    return false
 end
 
 function localAddon:SlashCommand(msg)
@@ -153,4 +165,14 @@ function localAddon:extractItemLinkAndAmount(msg)
     local amount = string.match(msg, "x(%d+)%.*$") or 1
 
     return itemLink, amount
+end
+
+function localAddon:isMessageStartingWithLootItemSelfString(msg)
+    -- Remove item placeholder
+    local lootString = LOOT_ITEM_SELF:gsub("%%s", ""):gsub("%.$", "")
+    -- Check if message substring from index 1 to number of letters in lootString equals lootString
+    if string.sub(msg, 1, #lootString) == lootString then
+        return true
+    end
+    return false
 end

@@ -32,6 +32,7 @@ local defaults = {
         timeStamp = date(),
         itemsToTrack = {},
         foundItems = {},
+        suppressLootMessage = false,
         isMigratedToAce = false
     }
 }
@@ -121,18 +122,29 @@ local generalOptions = { -- https://www.wowace.com/projects/ace3/pages/ace-confi
             type = "description",
             name = ""
         },
-        --otherOptionsDescription = {
-        --    order = 50,
-        --    type = "description",
-        --    name = "will be replaced"
-        --},
-        --placeholderDescription12 = {
-        --    order = 51,
-        --    type = "description",
-        --    name = ""
-        --},
+        otherOptionsDescription = {
+            order = 50,
+            type = "description",
+            name = "will be replaced"
+        },
+        placeholderDescription12 = {
+            order = 51,
+            type = "description",
+            name = ""
+        },
+        suppressLootMessageCheckbox = {
+            order = 52,
+            type = "toggle",
+            name = "Suppress Loot Message of tracked items",
+            get = function(_)
+                return localAddon.db.char.suppressLootMessage
+            end,
+            set = function(_, value)
+                localAddon.db.char.suppressLootMessage = value
+            end
+        },
         --miniMapButtonCheckbox = {
-        --    order = 52,
+        --    order = 55,
         --    type = "toggle",
         --    name = "Show Minimap Button",
         --    get = function(_)
@@ -565,7 +577,7 @@ function localAddon:setPanelTexts()
     generalOptions.args.chatFrameNameInput.name = self.db.char.color .. "Item List"
     generalOptions.args.chatFrameNameInput.name = self.db.char.color .. "Chat Frame to print to"
     generalOptions.args.outputMessageOption.name = self.db.char.color .. "Output Message"
-    --generalOptions.args.otherOptionsDescription.name = self.db.char.color .. "Other Options"
+    generalOptions.args.otherOptionsDescription.name = self.db.char.color .. "Other Options"
     generalOptions.args.fontColorDescription.name = self.db.char.color .. "Change Color of Font"
     generalOptions.args.itemListInput.name = self.db.char.color .. "Items to track"
     channelOptions.name = self.db.char.color .. "Output Channel"

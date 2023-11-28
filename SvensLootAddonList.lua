@@ -58,3 +58,13 @@ function localAddon:reportLootList()
         end
     end
 end
+
+function localAddon:isItemInItemsToTrackList(itemLink)
+    local itemsToTrackList = self.db.char.itemsToTrack
+    for i = 1, #itemsToTrackList do
+        if (GetItemInfo(itemLink) == itemsToTrackList[i]) then
+            return true
+        end
+    end
+    return false
+end
