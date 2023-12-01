@@ -552,7 +552,7 @@ local channelOptions = { -- https://www.wowace.com/projects/ace3/pages/ace-confi
                     bnetWhisperList[arg] = true
                 end
 
-                local isAboveClassic = (tonumber(select(4, GetBuildInfo())) > 82000)
+                local isAboveClassic = (select(4, GetBuildInfo()) > 82000)
 
                 local numBNetTotal, _, _, _ = BNGetNumFriends()
                 localAddon.db.char.battleNetWhisperBattleNetTagToId = {}
