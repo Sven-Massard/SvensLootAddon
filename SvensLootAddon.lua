@@ -119,7 +119,6 @@ function SLA_suppressWhisperMessage(_, _, msg, _, ...)
     return isNameInWhisperList
 end
 
--- Function for event filter for CHAT_MSG_LOOT to suppress message of player on whisper list being offline when being whispered to
 function SLA_suppressLootMessage(_, _, msg, _, ...)
     if not localAddon:isMessageStartingWithLootItemSelfString(msg) or not localAddon.db.char.suppressLootMessage then
         return false
